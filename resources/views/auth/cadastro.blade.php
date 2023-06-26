@@ -57,11 +57,18 @@
 <body>
     <div class="container">
         <h2>Cadastro</h2>
+        @if ($errors->any())
+            <ul class="errors">
+                @foreach ($errors->all() as $error)
+                    <li class="error">{{ $error }}</li>
+                @endforeach
+            </ul>
+        @endif
         <form method="POST" action="{{ route('cadastro') }}">
             @csrf
             <div class="form-group">
                 <label for="name">Nome</label>
-                <input type="text" id="name" name="name" required>
+                <input type="text" id="name" name="name" required >
             </div>
             <div class="form-group">
                 <label for="email">Email</label>

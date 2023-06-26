@@ -3,52 +3,43 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Providers\RouteServiceProvider;
+use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class LoginController extends Controller
 {
-    /**
-     * Exibe o formulário de login.
-     *
-     * @return \Illuminate\View\View
-     */
     public function mostrarFormLogin()
     {
         return view('auth.login');
     }
 
-    /**
-     * Processa o formulário de login.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function login(Request $request)
     {
-        $credentials = $request->only('email', 'password');
+        $credentials = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
 
-        if (Auth::attempt($credentials)) {
-            // Autenticação bem-sucedida
-            return redirect()->intended('/')->with('success', 'Login realizado com sucesso.');
+        $user = User::where('email', $credentials['email'])->first();
+
+        if ($user && Hash::check($credentials['password'], $user->password)) {
+            // Autenticado com sucesso
+            $request->session()->regenerate();
+            return redirect('/jogos-disponiveis');
         }
 
-        // Autenticação falhou
-        return redirect()->back()->with('error', 'Credenciais inválidas. Verifique seu email e senha.');
+        return back()->withErrors([
+            'email' => 'As credenciais fornecidas estão incorretas.',
+        ]);
     }
-
-    /**
-     * Faz logout do usuário.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function logout(Request $request)
+    
+    public function logout()
     {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('login')->with('success', 'Logout realizado com sucesso.');
+        auth()->logout();
+    
+        return redirect('/login');
     }
 }
